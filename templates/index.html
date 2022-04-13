@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block body %}    
     <h1>Register for Testing</h1>
-    <form action="/register" method="post">
+    <form name="registration" action="/register" method="post" onsubmit="return validateRegistration()">
         <label for="name">Enter Name:</label><br>
         <input name="name" id="name" placeholder="Name" type="text"><br>
         <label for="age">Enter Age:</label><br>
@@ -15,5 +15,23 @@
         </select>
         <input type="submit" value="Register">
     </form>
+    <script>
+        function validateRegistration(){
+            let inputs = document.forms["registration"];
+            if(!inputs["name"].value){
+                alert('Must provide your name');
+                return false;
+            }
+            if(!inputs["age"].value){
+                alert('Must provide your age');
+                return false;
+            }
+            if(!inputs["state"].value){
+                alert('Must select a state');
+                return false;
+            }
+            return true;
+        }
+    </script>
     <p><a href="/registrants">See who else is registered</a></p>
 {% endblock body %}
