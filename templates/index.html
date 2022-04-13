@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+{% block body %}    
+    <h1>Register for Testing</h1>
+    <form action="/register" method="post">
+        <input name="name" placeholder="Name" type="text"><br>
+        <input name="age" placeholder="Age" type="text"><br>
+        <select name=state>
+            <option disabled selected value="">State</option>
+            <option value="SC">South Carolina</option>
+            <option value="NC">North Carolina</option>
+            <option value="GA">Georgia</option>
+        </select>
+        <input type="submit" value="Register">
+    </form>
+{% endblock body %}
+
