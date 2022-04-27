@@ -4,13 +4,27 @@ from flask import Flask, render_template, request, redirect
 from markupsafe import escape
 import os
 import csv
+import secrets
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex()
 
 # Registered participants
 ppl = []
 if os.path.isfile("registrants.csv"):
     ppl = open("registrants.csv").read().splitlines()
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+@app.route("/signup")
+def signup():
+    return "signup"
+
+@app.route("/logout")
+def logout():
+    return "logout"
 
 @app.route("/")
 def homepage():
@@ -34,3 +48,6 @@ def register():
 @app.route("/registrants")
 def registrants():
     return render_template("registrants.html", ppl=ppl)
+
+if __name__=='__main__':
+    app.run(debug=True)
