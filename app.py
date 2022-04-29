@@ -15,7 +15,7 @@ if os.path.isfile("registrants.csv"):
     ppl = open("registrants.csv").read().splitlines()
 
 @app.route("/")
-def homepage():
+def index():
     return render_template('index.html')
 
 @app.route("/register", methods=["POST"])
