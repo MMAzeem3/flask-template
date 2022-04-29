@@ -14,18 +14,6 @@ ppl = []
 if os.path.isfile("registrants.csv"):
     ppl = open("registrants.csv").read().splitlines()
 
-@app.route("/login")
-def login():
-    return render_template("login.html")
-
-@app.route("/signup")
-def signup():
-    return "signup"
-
-@app.route("/logout")
-def logout():
-    return "logout"
-
 @app.route("/")
 def homepage():
     return render_template('index.html')
