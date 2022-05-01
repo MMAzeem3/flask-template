@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 from enum import unique
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, url_for
 from markupsafe import escape
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
@@ -11,7 +11,7 @@ import csv
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-# from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -20,14 +20,16 @@ app.secret_key = secrets.token_hex()
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///UserInfo.db'
 
 db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.view ='login'
 
-# Registered participants
-ppl = []
-if os.path.isfile("registrants.csv"):
-    ppl = open("registrants.csv").read().splitlines()
+@login_manager.user_loader
+def load_user(user_id):
+    return Users.query.get(int(user_id))
 
 # create User Model
-class Users(db.Model):
+class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False, unique=True)
@@ -76,11 +78,51 @@ def add_user():
                            name=name,
                            our_users=our_users)
 
+class LoginForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Submit")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(email=form.email.data).first()
+        if user:
+            if user.verify_password(form.password.data):
+                login_user(user)
+                return redirect('/dashboard')
+            else:
+                # todo flash
+                return 'wrong'
+        else:
+            return 'that email doesnt exist'
+    return render_template('login.html', form=form)
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    # todo flash
+    return redirect(url_for('login'))
+
 @app.route("/")
+@login_required
 def index():
     return render_template('index.html')
+# Registered participants
+
+ppl = []
+if os.path.isfile("registrants.csv"):
+    ppl = open("registrants.csv").read().splitlines()
 
 @app.route("/register", methods=["POST"])
+@login_required
 def register():
     # get values with http request
     name = request.form.get("name")
@@ -96,6 +138,7 @@ def register():
     return render_template("register.html", person=ppl[-1])
 
 @app.route("/registrants")
+@login_required
 def registrants():
     return render_template("registrants.html", ppl=ppl)
 
