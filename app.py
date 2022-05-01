@@ -11,6 +11,7 @@ import csv
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex()
@@ -25,7 +26,7 @@ if os.path.isfile("registrants.csv"):
     ppl = open("registrants.csv").read().splitlines()
 
 # create Model
-class Users(db.Model):
+class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False, unique=True)
