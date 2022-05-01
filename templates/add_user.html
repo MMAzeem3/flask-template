@@ -17,6 +17,15 @@
                 {{ form.email.label(class="form-label") }}
                 {{ form.email(class="form-control") }}
                 <br>
+
+                {{ form.password_hash.label(class="form-label") }}
+                {{ form.password_hash(class="form-control") }}
+                <br>
+
+                {{ form.password_hash_confirm.label(class="form-label") }}
+                {{ form.password_hash_confirm(class="form-control") }}
+                <br>
+
                 {{ form.submit(class="btn btn-secondary") }}
             </form>
         </div> 

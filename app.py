@@ -4,19 +4,20 @@ from enum import unique
 from flask import Flask, render_template, request, redirect
 from markupsafe import escape
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length
 import os
 import csv
 import secrets
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+# from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///UserInfo.db'
 
 db = SQLAlchemy(app)
 
@@ -25,13 +26,25 @@ ppl = []
 if os.path.isfile("registrants.csv"):
     ppl = open("registrants.csv").read().splitlines()
 
-# create Model
-class Users(db.Model, UserMixin):
+# create User Model
+class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False, unique=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
+    password_hash = db.Column(db.String(2000))
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribtue')
     
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
     def __repr__(self):
         return '<Name %r>' % self.name
 
@@ -39,6 +52,8 @@ class Users(db.Model, UserMixin):
 class UserForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired()])
+    password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('password_hash_confirm', message='Passwords must match')])
+    password_hash_confirm = PasswordField("Confirm Password", validators=[DataRequired()])
     submit = SubmitField("Submit")
 
 @app.route('/user/add', methods=['GET', 'POST'])
@@ -48,12 +63,13 @@ def add_user():
     if form.validate_on_submit():
         user = Users.query.filter_by(email=form.email.data).first()     #query database - get all users with submitted email address - should be none
         if user is None:
-            user = Users(name=form.name.data, email=form.email.data)
+            user = Users(name=form.name.data, email=form.email.data, password=form.password_hash.data)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
         form.email.data = ''
+        form.password_hash = ''
     our_users = Users.query.order_by(Users.date_added)  # get all users
     return render_template('add_user.html', 
                            form=form,
