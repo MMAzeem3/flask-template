@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 from enum import unique
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, Response
 from markupsafe import escape
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField, ValidationError
@@ -28,6 +28,10 @@ login_manager.view ='login'
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
+@app.errorhandler(401)
+def custom_401(error):
+    flash('Login Required')
+    return redirect(url_for('login'))
 # create User Model
 class Users(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -93,10 +97,9 @@ def login():
                 login_user(user)
                 return redirect('/dashboard')
             else:
-                # todo flash
-                return 'wrong'
+                flash('Invalid Password')
         else:
-            return 'that email doesnt exist'
+            flash('Invlid Email Address')
     return render_template('login.html', form=form)
 
 @app.route('/dashboard')
