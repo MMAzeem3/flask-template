@@ -1,37 +1,9 @@
-{% extends 'base.html' %}
-{% block body %}    
-    <h1>Register for Testing</h1>
-    <form name="registration" autofocus action="/register" method="post" onsubmit="return validateRegistration()">
-        <label for="name">Enter Name:</label><br>
-        <input name="name" id="name" placeholder="Name" type="text"><br>
-        <label for="age">Enter Age:</label><br>
-        <input name="age" id="age" placeholder="Age" type="text"><br>
-        <label for="state">Select State:</label><br>
-        <select name=state id="state">
-            <option disabled selected value="">State</option>
-            <option value="SC">South Carolina</option>
-            <option value="NC">North Carolina</option>
-            <option value="GA">Georgia</option>
-        </select>
-        <input type="submit" value="Register">
+{% extends 'layout.html' %}
+{% block body %}
+    <h1>Upload a File to Convert it to uppercase</h1>
+    <form name="file_form" id="file_form" action="/process-file" method=post enctype="multipart/form-data">
+        <label for="file_input">Select a file:</label><br>
+        <input name= "{{ input_name }}" id="file_input" type="file" required multiple><br>
+        <input type="submit" value="Upload">
     </form>
-    <script>
-        function validateRegistration(){
-            let inputs = document.forms["registration"];
-            if(!inputs["name"].value){
-                alert('Must provide your name');
-                return false;
-            }
-            if(!inputs["age"].value){
-                alert('Must provide your age');
-                return false;
-            }
-            if(!inputs["state"].value){
-                alert('Must select a state');
-                return false;
-            }
-            return true;
-        }
-    </script>
-    <p><a href="/registrants">See who else is registered</a></p>
 {% endblock body %}

@@ -1,41 +1,40 @@
-#! /usr/bin/env python3
-
-from flask import Flask, render_template, request, redirect
-from markupsafe import escape
+import flask
+from flask import Flask, redirect, render_template, request, url_for, send_from_directory
+from werkzeug.utils import secure_filename
+from lib.utils import *
 import os
-import csv
-import secrets
+
+UPLOAD_FOLDER = "raw/"
+INPUT_NAME = "file_in"
+# ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex()
-
-# Registered participants
-ppl = []
-if os.path.isfile("registrants.csv"):
-    ppl = open("registrants.csv").read().splitlines()
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html", input_name = INPUT_NAME)
 
-@app.route("/register", methods=["POST"])
-def register():
-    # get values with http request
-    name = request.form.get("name")
-    age = request.form.get("age")
-    state = request.form.get("state")
-    if not name or not age or not state:
-        # check for valid input
-        return render_template('invalid.html')
-    with open("registrants.csv", 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow([name, age, state])
-    ppl.append(open("registrants.csv").readlines()[-1])
-    return render_template("register.html", person=ppl[-1])
+@app.route("/process-file", methods=["POST"])
+def process_file():
+    if request.method == 'POST':
+        if INPUT_NAME not in request.files:
+            return redirect('/fail-input')    # no file
+        file = request.files[INPUT_NAME]
+        if file.filename == '':
+            return redirect('/fail-input')
+        if file:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            file_to_upper(filename)
+            return redirect(f"download-file/{filename}")
+            # return redirect('download-button')
+    return redirect('/')
 
-@app.route("/registrants")
-def registrants():
-    return render_template("registrants.html", ppl=ppl)
+@app.route("/download-file/<filename>")
+def download_file(filename):
+    return send_from_directory("processed", filename)
 
-if __name__=='__main__':
-    app.run(debug=True)
+@app.route("/fail-input")
+def fail():
+    return ("fail")
